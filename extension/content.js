@@ -142,10 +142,29 @@ function applyMode(isDark) {
 	document.documentElement.classList.toggle('dark-mode', isDark);
 }
 
-function init() {
-	const state = JSON.parse($('.___iso-state___').dataset.state).initialState;
-	const username = state.settings.data.screen_name;
+function getInitialState() {
+	const scripts = Array.prototype.slice.call(document.getElementsByTagName('script'));
+	const scriptText = scripts.filter(script =>
+		script.innerText.indexOf('window.__INITIAL_STATE__ = ') !== -1
+	).map(script => script.innerText).join('');
+	const stateStr = scriptText.split('window.__INITIAL_STATE__ = ')[1].split(/;\s*window.__META_DATA__/)[0];
 
+	try {
+		return JSON.parse(stateStr);
+	} catch (err) {
+		return {};
+	}
+}
+
+function getUserObject() {
+	const initialState = getInitialState();
+	const userId = Object.keys(initialState.users.users)[0];
+
+	return initialState.users.users[userId];
+}
+
+function init() {
+	const username = getUserObject().screen_name;
 	registerShortcuts(username);
 
 	// apply dark mode with local storage value
